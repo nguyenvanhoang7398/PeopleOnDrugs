@@ -1,4 +1,4 @@
-import math, csv, os, pickle
+import math, csv, os, pickle, random
 import nltk
 import numpy as np
 from nltk.tokenize import RegexpTokenizer
@@ -57,7 +57,9 @@ def load_data(pickle_in):
 
 def divide_batches(fin, n_batches, size):
     print("Divide", fin, "into", n_batches, "batches.")
-    tsvin = open(fin + ".tsv", mode='rt')
+    tsvin = open(fin + ".tsv", mode='rt', encoding="ISO-8859-1")
+    name = fin.split("/")[-1]
+    name = name.split(".")[0]
     tsvin_writer = csv.reader(tsvin, delimiter='\t')
     dir = fin + "/"
     if not os.path.exists(dir):
@@ -65,15 +67,14 @@ def divide_batches(fin, n_batches, size):
     line_per_file = math.ceil(float(size) / n_batches)
     n_out = 1
     n_line = 1
-    csvout = open(dir + fin + "_" + str(n_out) + ".csv", "wt")
-    csvout_writer = csv.writer(csvout, delimiter=',', lineterminator='\n')
-    for row in tsvin_writer:
-        print(row)
+    csvout = open(dir + name + "_" + str(n_out) + ".tsv", mode="wt", encoding="ISO-8859-1")
+    csvout_writer = csv.writer(csvout, delimiter='\t', lineterminator='\n')
+    for row in tsvin_writer: 
         if n_line > line_per_file:
             n_out += 1
             csvout.close()
-            csvout = open(dir + fin + "_" + str(n_out) + ".csv", "wt")
-            csvout_writer = csv.writer(csvout, delimiter=',', lineterminator='\n')
+            csvout = open(dir + name + "_" + str(n_out) + ".tsv", mode="wt", encoding="ISO-8859-1")
+            csvout_writer = csv.writer(csvout, delimiter='\t', lineterminator='\n')
             n_line = 1
         csvout_writer.writerow(row)
         n_line += 1
@@ -97,3 +98,16 @@ def create_linguistic_feature(features_list, doc):
     features = np.divide(features, len(tokens))
 
     return features
+
+
+def create_train_test_data(dataset, test_size=0.1):
+    random.shuffle(dataset)
+    dataset = np.array(dataset)
+    testing_size = int(test_size*len(dataset))
+
+    train_inputs = list(dataset[:,0][:-testing_size])
+    train_labels = list(dataset[:,1][:-testing_size])
+    test_inputs = list(dataset[:,0][-testing_size:])
+    test_labels = list(dataset[:,1][-testing_size:])
+
+    return train_inputs, train_labels, test_inputs, test_labels
