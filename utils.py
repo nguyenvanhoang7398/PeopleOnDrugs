@@ -2,7 +2,9 @@ import math, csv, os, pickle, random, nltk, string
 import numpy as np
 from nltk.tokenize import word_tokenize
 
-from constants import affective_features_default_path, affective_word_dict_default_path, schema
+from constants import affective_feature_default_path, affective_word_dict_default_path, schema, \
+    user_feature_dict_default_path, author_details_default_path, num_user_features, user_max_posts, user_max_questions, \
+    user_max_replies, user_max_thanks
 
 
 def save_data(path, py_object):
@@ -70,12 +72,12 @@ def create_stylistic_feature_vector(features_list, doc):
     return features
 
 
-def create_affective_word_dict(fin=affective_features_default_path, fout=affective_word_dict_default_path):
+def create_affective_word_dict(fin=affective_feature_default_path, fout=affective_word_dict_default_path):
     csvin = open(fin, mode='rt', encoding="ISO-8859-1")
     csvin_reader = csv.reader(csvin, delimiter=',')
-    affective_word_dict = {}
-    inv_affective_word_dict = {}
-    affective_category_list = []
+    _affective_word_dict = {}
+    _inv_affective_word_dict = {}
+    _affective_category_list = []
 
     for i, row in enumerate(csvin_reader): # iterate through file
         if i == 0:
@@ -84,18 +86,18 @@ def create_affective_word_dict(fin=affective_features_default_path, fout=affecti
         affective_word_list = row[1] # parse affective word list
         for tok in word_tokenize(affective_word_list): # tokenize
             if tok not in string.punctuation: # eliminate punctuations
-                if tok not in affective_word_dict.keys(): # check if token's alr in dict
-                    affective_word_dict[tok] = set() # create new set, we use set to avoid duplicates
-                if affective_category not in inv_affective_word_dict.keys(): # do the same w/ categories
-                    inv_affective_word_dict[affective_category] = set()
-                    affective_category_list += [affective_category]
+                if tok not in _affective_word_dict.keys(): # check if token's alr in dict
+                    _affective_word_dict[tok] = set() # create new set, we use set to avoid duplicates
+                if affective_category not in _inv_affective_word_dict.keys(): # do the same w/ categories
+                    _inv_affective_word_dict[affective_category] = set()
+                    _affective_category_list += [affective_category]
 
-                affective_word_dict[tok].add(affective_category)
-                inv_affective_word_dict[affective_category].add(tok)
+                _affective_word_dict[tok].add(affective_category)
+                _inv_affective_word_dict[affective_category].add(tok)
 
-    save_data(path=fout, py_object=(affective_word_dict, inv_affective_word_dict, affective_category_list)) # save both forward and inverse dicts
+    save_data(path=fout, py_object=(_affective_word_dict, _inv_affective_word_dict, _affective_category_list)) # save both forward and inverse dicts
     print("Affective word dict saved at " + fout)
-    return affective_word_dict, inv_affective_word_dict, affective_category_list
+    return _affective_word_dict, _inv_affective_word_dict, _affective_category_list
 
 
 if isfile(affective_word_dict_default_path): # check if affective word dict has been created
@@ -120,6 +122,56 @@ def create_affective_feature_vector(doc):
         features = np.divide(features, num_toks)
 
     return features
+
+
+def create_user_feature_dict(fin=author_details_default_path, fout=user_feature_dict_default_path):
+    csvin = open(fin, mode='rt', encoding="ISO-8859-1")
+    csvin_reader = csv.reader(csvin, delimiter=',')
+    _user_feature_dict = {
+        "gender": set(),
+        "membership_types": set()
+    }
+
+    for i, row in enumerate(csvin_reader): # iterate through file
+        if i == 0:
+            continue
+        gender = row[1]
+        membership_types = row[4]
+
+        _user_feature_dict["gender"].add(gender)
+        _user_feature_dict["membership_types"].add(membership_types)
+
+    _user_feature_dict["gender"] = list(_user_feature_dict["gender"])
+    _user_feature_dict["membership_types"] = list(_user_feature_dict["membership_types"])
+
+    save_data(path=fout, py_object=_user_feature_dict)
+    print("User feature dictionary saved at " + fout)
+    return _user_feature_dict
+
+
+if isfile(user_feature_dict_default_path): # check if affective word dict has been created
+    user_feature_dict = load_data(user_feature_dict_default_path)
+else: # if not, create a new one
+    user_feature_dict = create_user_feature_dict()
+    print("User feature dictionary loaded at " + user_feature_dict_default_path)
+
+
+def create_user_feature_vector(row):
+    gender = row[1]
+    num_posts = row[3]
+    mem_types = row[4]
+    num_questions = row[5]
+    num_replies = row[6]
+    num_thanks = row[7]
+
+    feature = np.zeros(num_user_features)
+    feature[0] = float(user_feature_dict["gender"].index(gender)) / len(user_feature_dict["gender"])
+    feature[1] = float(num_posts) / user_max_posts
+    feature[2] = float(user_feature_dict["membership_types"].index(mem_types)) / len(user_feature_dict["membership_types"])
+    feature[3] = float(num_questions) / user_max_questions
+    feature[4] = float(num_replies) / user_max_replies
+    feature[5] = float(num_thanks) / user_max_thanks
+    return feature
 
 
 def create_train_test_data(dataset, test_size=0.1):

@@ -1,15 +1,15 @@
-from utils import create_stylistic_feature_vector, create_affective_feature_vector, save_data, load_data
+from utils import create_stylistic_feature_vector, create_affective_feature_vector, save_data, load_data, \
+    create_user_feature_vector
 from constants import feature_list, stylistic_csvout_default_path, stylistic_fout_default_path, \
     affective_csvout_default_path, affective_fout_default_path, author_doc_review_small_default_path, \
-    author_doc_review_default_path
+    author_doc_review_default_path, affective_headers, stylistic_headers, user_headers, author_details_default_path, \
+    user_csvout_default_path, user_fout_default_path
+
 import os, csv, uuid
 import numpy as np
 
 
 def build_review_dataset(fin, stylistic_csvout, stylistic_fout, affective_csvout, affective_fout):
-    stylistic_headers = ["author-id", "doc-id", "post-id", "stylistic-feature"]
-    affective_headers = ["author-id", "doc-id", "post-id", "affective-feature"]
-
     csvin = open(fin, mode='rt', encoding="ISO-8859-1") # open csv in
     csvin_reader = csv.reader(csvin, delimiter=',')
 
@@ -52,62 +52,35 @@ def build_review_dataset(fin, stylistic_csvout, stylistic_fout, affective_csvout
     _affective_csvout.close()
 
 
-def build_user_dataset(review_dataset_path, users_details_path, out_path, samples_per_files=3000):
-    user_details_files = [f for f in os.listdir(users_details_path) if f.endswith('.tsv')]
-    review_dataset_files = [f for f in os.listdir(review_dataset_path) if f.endswith('.pickle')]
-    review_dataset = []
-    user_features_dict = {}
-    for i, file in enumerate(review_dataset_files):
-        if (i+1) % 20:
-            print("Loaded", str(i+1), "/", str(len(review_dataset_files)))
-        dataset = load_data(review_dataset_path + file)
-        review_dataset += dataset
+def build_user_dataset(fin, user_csvout, user_fout):
+    csvin = open(fin, mode='rt', encoding="ISO-8859-1")  # open csv in
+    csvin_reader = csv.reader(csvin, delimiter=',')
 
-    for review in review_dataset:
-        user_id = review[0]
-        review_vector = review[2]
-        if user_id not in user_features_dict.keys():
-            if not np.isnan(review_vector).any():
-                user_features_dict[user_id] = review_vector
-        elif not np.isnan(review_vector).any():
-            user_features_dict[user_id] = np.add(user_features_dict[user_id], review_vector)
-    user_dataset = []
-    
-    i = 0
-    for fin in user_details_files:
-        csvin = open(users_details_path + fin, mode='rt', encoding="ISO-8859-1")
-        csvin_reader = csv.reader(csvin, delimiter='\t')
+    _user_csvout = open(user_csvout, "wt")  # open csv out for stylistic and affective
+    user_csvout_writer = csv.writer(_user_csvout, delimiter=',', lineterminator='\n')
 
-        for row in csvin_reader:
-            if i % 500 == 0:
-                print("Proceeded", i, "/ 15000 users")
-            i += 1
-            user_id = row[0]
-            if user_id not in user_features_dict.keys():
-                continue    
-            num_reviews = int(row[3])
-            num_likes = (row[7])
-            if num_likes == 'null':
-                num_likes = 0
-            else:
-                num_likes = int(row[7])
-            normalized_user_vector = np.divide(user_features_dict[user_id], num_reviews)
-            normalized_likes = num_likes / num_reviews   
-            if not (np.isnan(normalized_user_vector).any() or np.isnan(normalized_likes)):
-                user_dataset.append([normalized_user_vector, normalized_likes])
-        csvin.close()
-    small_batch = []
-    j = 1
-    for i, data in enumerate(user_dataset):
-        small_batch.append(data)
-        if (i+1) % samples_per_files == 0:
-            save_data(out_path + "user_dataset_" + str(j) + ".pickle", small_batch)
-            j += 1
-            small_batch = []
-    save_data(out_path + "user_dataset_" + str(j) + ".pickle", small_batch)
+    user_feature_dataset = []
+    for i, row in enumerate(csvin_reader):
+        if i % 50000 == 0:
+            print("Processed " + str(i) + " rows")
+        if i == 0:
+            user_row = user_headers
+        else:
+            user_feature_vector = create_user_feature_vector(row)
+            user_row = row + [str(list(user_feature_vector))]
+            user_data_point = row + [user_feature_vector]
+            user_feature_dataset.append(user_data_point)
+
+        user_csvout_writer.writerow(user_row)
+
+    save_data(path=user_fout, py_object=user_feature_dataset)
+    csvin.close()
+    _user_csvout.close()
 
 
 if __name__ == "__main__":
-    build_review_dataset(fin=author_doc_review_small_default_path, stylistic_csvout=stylistic_csvout_default_path,
-                         stylistic_fout=stylistic_fout_default_path, affective_csvout=affective_csvout_default_path,
-                         affective_fout=affective_fout_default_path)
+    # build_review_dataset(fin=author_doc_review_default_path, stylistic_csvout=stylistic_csvout_default_path,
+    #                      stylistic_fout=stylistic_fout_default_path, affective_csvout=affective_csvout_default_path,
+    #                      affective_fout=affective_fout_default_path)
+    build_user_dataset(fin=author_details_default_path, user_csvout=user_csvout_default_path,
+                       user_fout=user_fout_default_path)
