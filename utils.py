@@ -70,12 +70,42 @@ def create_stylistic_feature_vector(features_list, doc):
     return features
 
 
+def create_affective_word_dict(fin=affective_features_default_path, fout=affective_word_dict_default_path):
+    csvin = open(fin, mode='rt', encoding="ISO-8859-1")
+    csvin_reader = csv.reader(csvin, delimiter=',')
+    affective_word_dict = {}
+    inv_affective_word_dict = {}
+    affective_category_list = []
+
+    for i, row in enumerate(csvin_reader): # iterate through file
+        if i == 0:
+            continue
+        affective_category = row[0] # parse affective category
+        affective_word_list = row[1] # parse affective word list
+        for tok in word_tokenize(affective_word_list): # tokenize
+            if tok not in string.punctuation: # eliminate punctuations
+                if tok not in affective_word_dict.keys(): # check if token's alr in dict
+                    affective_word_dict[tok] = set() # create new set, we use set to avoid duplicates
+                if affective_category not in inv_affective_word_dict.keys(): # do the same w/ categories
+                    inv_affective_word_dict[affective_category] = set()
+                    affective_category_list += [affective_category]
+
+                affective_word_dict[tok].add(affective_category)
+                inv_affective_word_dict[affective_category].add(tok)
+
+    save_data(path=fout, py_object=(affective_word_dict, inv_affective_word_dict, affective_category_list)) # save both forward and inverse dicts
+    print("Affective word dict saved at " + fout)
+    return affective_word_dict, inv_affective_word_dict, affective_category_list
+
+
+if isfile(affective_word_dict_default_path): # check if affective word dict has been created
+    affective_word_dict, inv_affective_word_dict, affective_category_list = load_data(affective_word_dict_default_path)
+else: # if not, create a new one
+    affective_word_dict, inv_affective_word_dict, affective_category_list = create_affective_word_dict()
+    print("Affected word dictionary loaded at " + affective_word_dict_default_path)
+
+
 def create_affective_feature_vector(doc):
-    if isfile(affective_word_dict_default_path): # check if affective word dict has been created
-        affective_word_dict, inv_affective_word_dict, affective_category_list = load_data(affective_word_dict_default_path)
-    else: # if not, create a new one
-        affective_word_dict, inv_affective_word_dict, affective_category_list = create_affective_word_dict()
-        print("Affected word dictionary loaded at " + affective_word_dict_default_path)
     tokens = word_tokenize(doc) # tokenize doc
     features = np.zeros(len(affective_category_list)) # create zeros feature vector of size affective categories
     num_toks = 0
@@ -121,31 +151,3 @@ def convert_tsv_csv(file_in, file_out):
 
     csvout.close()
     tsvin.close()
-
-
-def create_affective_word_dict(fin=affective_features_default_path, fout=affective_word_dict_default_path):
-    csvin = open(fin, mode='rt', encoding="ISO-8859-1")
-    csvin_reader = csv.reader(csvin, delimiter=',')
-    affective_word_dict = {}
-    inv_affective_word_dict = {}
-    affective_category_list = []
-
-    for i, row in enumerate(csvin_reader): # iterate through file
-        if i == 0:
-            continue
-        affective_category = row[0] # parse affective category
-        affective_word_list = row[1] # parse affective word list
-        for tok in word_tokenize(affective_word_list): # tokenize
-            if tok not in string.punctuation: # eliminate punctuations
-                if tok not in affective_word_dict.keys(): # check if token's alr in dict
-                    affective_word_dict[tok] = set() # create new set, we use set to avoid duplicates
-                if affective_category not in inv_affective_word_dict.keys(): # do the same w/ categories
-                    inv_affective_word_dict[affective_category] = set()
-                    affective_category_list += [affective_category]
-
-                affective_word_dict[tok].add(affective_category)
-                inv_affective_word_dict[affective_category].add(tok)
-
-    save_data(path=fout, py_object=(affective_word_dict, inv_affective_word_dict, affective_category_list)) # save both forward and inverse dicts
-    print("Affective word dict saved at " + fout)
-    return affective_word_dict, inv_affective_word_dict, affective_category_list
