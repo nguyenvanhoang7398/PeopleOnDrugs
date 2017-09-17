@@ -165,12 +165,15 @@ def create_user_feature_vector(row):
     num_thanks = row[7]
 
     feature = np.zeros(num_user_features)
-    feature[0] = float(user_feature_dict["gender"].index(gender)) / len(user_feature_dict["gender"])
+    feature[0] = float(user_feature_dict["gender"].index(gender)) / (len(user_feature_dict["gender"]) - 1)
     feature[1] = float(num_posts) / user_max_posts
-    feature[2] = float(user_feature_dict["membership_types"].index(mem_types)) / len(user_feature_dict["membership_types"])
+    feature[2] = float(user_feature_dict["membership_types"].index(mem_types)) / (len(user_feature_dict["membership_types"]) - 1)
     feature[3] = float(num_questions) / user_max_questions
     feature[4] = float(num_replies) / user_max_replies
-    feature[5] = float(num_thanks) / user_max_thanks
+    if num_thanks != 'null':
+        feature[5] = float(num_thanks) / user_max_thanks
+    else:
+        feature[5] = 0
     return feature
 
 
