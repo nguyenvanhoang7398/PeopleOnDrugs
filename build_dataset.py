@@ -79,8 +79,8 @@ def build_user_dataset(fin, user_csvout, user_fout):
 
 
 if __name__ == "__main__":
-    # build_review_dataset(fin=author_doc_review_default_path, stylistic_csvout=stylistic_csvout_default_path,
-    #                      stylistic_fout=stylistic_fout_default_path, affective_csvout=affective_csvout_default_path,
-    #                      affective_fout=affective_fout_default_path)
+    build_review_dataset(fin=author_doc_review_default_path, stylistic_csvout=stylistic_csvout_default_path,
+                         stylistic_fout=stylistic_fout_default_path, affective_csvout=affective_csvout_default_path,
+                         affective_fout=affective_fout_default_path)
     build_user_dataset(fin=author_details_default_path, user_csvout=user_csvout_default_path,
                        user_fout=user_fout_default_path)

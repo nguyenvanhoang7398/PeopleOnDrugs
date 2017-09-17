@@ -4,6 +4,7 @@ affective_word_dict_default_path = "processed_data/affective_word_dict.pickle"
 affective_feature_default_path = "data/Affective-Features.csv"
 author_doc_review_default_path = "data/Author-Doc-Review.csv"
 author_doc_review_small_default_path = "data/Author-Doc-Review-Small.csv"
+author_doc_review_small_1k_default_path = "data/Author-Doc-Review-Small-1k.csv"
 author_details_default_path = "data/Author-Details.csv"
 author_details_small_default_path = "data/Author-Details-Small.csv"
 stylistic_csvout_default_path = "processed_data/Author-Doc-Stylistic.csv"
@@ -31,6 +32,19 @@ user_max_posts = 12921
 user_max_questions = 608
 user_max_replies = 8154
 user_max_thanks = 2462
+
+# doc2vec constants
+d2v_size = 128
+d2v_workers = 7
+d2v_window = 10
+d2v_sample = 1e-4
+d2v_negative = 5
+d2v_min_count = 1
+d2v_dm_concat = 1
+d2v_dm_mean = 0
+d2v_dbow_words = 0
+d2v_trim_rule = None
+d2v_iter = 20
 
 
 feature_list = [

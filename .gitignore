@@ -3,3 +3,4 @@
 data/
 *.pickle
 processed_data/
+doc2vec_model/

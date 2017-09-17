@@ -113,10 +113,10 @@ def create_affective_feature_vector(doc):
     num_toks = 0
 
     for i, token in enumerate(tokens):
-        if token in affective_word_dict.keys():
+        if token.lower() in affective_word_dict.keys():
             for category in affective_word_dict[token]: # iterate through all categories of a word
                 features[affective_category_list.index(category)] += 1
-        if token not in string.punctuation: # increase number of tokens if token is not a punctuation
+        if token.lower() not in string.punctuation: # increase number of tokens if token is not a punctuation
             num_toks += 1
     if num_toks != 0:
         features = np.divide(features, num_toks)
