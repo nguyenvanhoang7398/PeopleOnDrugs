@@ -1,10 +1,24 @@
-import math, csv, os, pickle, random, nltk, string
+import math, csv, os, pickle, random, nltk, string, sys
 import numpy as np
 from nltk.tokenize import word_tokenize
 
 from constants import affective_feature_default_path, affective_word_dict_default_path, schema, \
     user_feature_dict_default_path, author_details_default_path, num_user_features, user_max_posts, user_max_questions, \
     user_max_replies, user_max_thanks
+
+maxInt = sys.maxsize
+decrement = True
+
+while decrement:
+    # decrease the maxInt value by factor 10
+    # as long as the OverflowError occurs.
+
+    decrement = False
+    try:
+        csv.field_size_limit(maxInt)
+    except OverflowError:
+        maxInt = int(maxInt/10)
+        decrement = True
 
 
 def save_data(path, py_object):
