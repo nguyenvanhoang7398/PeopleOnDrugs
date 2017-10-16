@@ -4,3 +4,5 @@ data/
 *.pickle
 processed_data/
 doc2vec_model/
+__pycache__/
+.idea/
